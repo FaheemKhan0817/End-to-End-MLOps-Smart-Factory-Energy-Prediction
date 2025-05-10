@@ -1,0 +1,3 @@
+data_ingestion:
+  data_source : "https://raw.githubusercontent.com/FaheemKhan0817/Datasets-for-ML-Projects/refs/heads/main/Smart%20Factory%20Energy%20Dataset.csv"
+
