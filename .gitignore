@@ -172,3 +172,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+smart_factory_energy_prediction.egg-info/
+
+mlruns/
+mlflow.db
+logs/
