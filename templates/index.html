@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Factory Energy Prediction</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body class="flex items-center justify-center min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center text-white mb-8">🏭 Smart Factory Energy Prediction</h1>
+
+        <!-- Tabs -->
+        <div class="flex justify-center space-x-4 mb-8">
+            <button class="tab px-6 py-3 rounded-full font-semibold" onclick="showTab('single')">Single Prediction</button>
+            <button class="tab px-6 py-3 rounded-full font-semibold" onclick="showTab('batch')">Batch Prediction</button>
+        </div>
+
+        <!-- Error Message -->
+        {% if error %}
+            <div class="error-message">
+                <p>{{ error }}</p>
+            </div>
+        {% endif %}
+
+        <!-- Single Prediction Tab -->
+        <div id="single" class="tab-content active">
+            <h2 class="text-2xl font-semibold text-white mb-6">Enter Sensor Data</h2>
+            <form action="/predict" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for feature in selected_features %}
+                    {% if 'temperature' in feature or 'heat_index' in feature %}
+                        <div class="input-group">
+                            <label class="input-label">{{ feature.replace('_', ' ').title() }} (°C)</label>
+                            <input type="range" name="{{ feature }}" min="0" max="50" step="0.1" value="25" 
+                                   class="slider" oninput="this.nextElementSibling.value = this.value">
+                            <output class="slider-value">25</output>
+                        </div>
+                    {% elif 'energy' in feature %}
+                        <div class="input-group">
+                            <label class="input-label">{{ feature.replace('_', ' ').title() }} (kWh)</label>
+                            <input type="number" name="{{ feature }}" min="0" max="1000" step="0.1" value="100" 
+                                   class="number-input" required>
+                        </div>
+                    {% elif 'humidity' in feature %}
+                        <div class="input-group">
+                            <label class="input-label">{{ feature.replace('_', ' ').title() }} (%)</label>
+                            <input type="range" name="{{ feature }}" min="0" max="100" step="0.1" value="50" 
+                                   class="slider" oninput="this.nextElementSibling.value = this.value">
+                            <output class="slider-value">50</output>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                <div class="col-span-1 md:col-span-2">
+                    <button type="submit" class="submit-button">Predict Energy Consumption</button>
+                </div>
+            </form>
+            {% if prediction %}
+                <div class="success-message mt-6">
+                    <p>Predicted Energy Consumption: <strong>{{ prediction }}</strong></p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Batch Prediction Tab -->
+        <div id="batch" class="tab-content">
+            <h2 class="text-2xl font-semibold text-white mb-6">Upload CSV File</h2>
+            <form action="/batch_predict" method="POST" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".csv" class="file-input" required>
+                <button type="submit" class="submit-button mt-4">Upload and Predict</button>
+            </form>
+            {% if batch_results %}
+                <div class="mt-8">
+                    <h3 class="text-xl font-semibold text-white mb-4">Batch Predictions</h3>
+                    <div class="overflow-x-auto">
+                        <table class="result-table">
+                            <thead>
+                                <tr>
+                                    {% for col in batch_results[0].keys() %}
+                                        <th>{{ col }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in batch_results %}
+                                    <tr>
+                                        {% for value in row.values() %}
+                                            <td>{{ value | round(2) }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <a href="/download/{{ download_file }}" class="download-button">Download Predictions as CSV</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelector(`button[onclick="showTab('${tabId}')"]`).classList.add('active');
+        }
+    </script>
+</body>
+</html>
