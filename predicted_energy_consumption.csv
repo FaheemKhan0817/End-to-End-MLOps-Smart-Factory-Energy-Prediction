@@ -1,3 +1,0 @@
-energy_rolling_mean_3h,energy_lag_2h,energy_lag_1h,zone3_heat_index,zone3_temperature,avg_zone_humidity,zone1_heat_index,zone1_temperature,zone2_temperature,zone6_temperature,Predicted_Energy_Consumption
-100.0,90.0,95.0,30.0,25.0,50.0,28.0,24.0,26.0,23.0,119.94588134894775
-110.0,100.0,105.0,32.0,27.0,55.0,30.0,26.0,28.0,25.0,130.2256114793088

@@ -6,6 +6,7 @@ from sklearn.linear_model import Lasso
 from sklearn.feature_selection import SelectFromModel
 from src.logger import get_logger
 from src.custom_exception import CustomException
+from config.paths_config import RAW_FILE_PATH, PROCESSED_DIR, SCALER_PATH
 import joblib
 
 class DataPreprocessing:
@@ -245,20 +246,16 @@ class DataPreprocessing:
             split_idx = int(len(self.df) * 0.8)
             X_train = X.iloc[:split_idx]
             y_train = y.iloc[:split_idx]
-            scaler = StandardScaler()
-            X_train_scaled = pd.DataFrame(scaler.fit_transform(X_train), columns=X_train.columns)
             lasso = Lasso(alpha=0.01, max_iter=10000, random_state=42)
             selector = SelectFromModel(lasso, max_features=max_features, threshold=-np.inf)
-            selector.fit(X_train_scaled, y_train)
+            selector.fit(X_train, y_train)
             self.selected_features = X_train.columns[selector.get_support()].tolist()
             for feature in self.top_features:
                 if feature in X_train.columns and feature not in self.selected_features:
                     self.selected_features.append(feature)
                     self.logger.info(f"Added critical feature: {feature}")
             self.df = self.df[self.selected_features + ['timestamp', 'equipment_energy_consumption']]
-            joblib.dump(scaler, os.path.join(self.output_path, 'scaler.pkl'))
             self.logger.info(f"Selected features: {self.selected_features}")
-            self.logger.info(f"Scaler saved to {os.path.join(self.output_path, 'scaler.pkl')}")
         except Exception as e:
             self.logger.error(f"Error while selecting important features: {e}")
             raise CustomException("Failed to select important features", str(e))
@@ -277,9 +274,14 @@ class DataPreprocessing:
             if missing_features:
                 self.logger.error(f"Missing required features: {missing_features}")
                 raise CustomException("Required features missing", f"Missing: {missing_features}")
+            scaler = StandardScaler()
+            X_train_scaled = pd.DataFrame(scaler.fit_transform(X_train), columns=X_train.columns)
+            X_test_scaled = pd.DataFrame(scaler.transform(X_test), columns=X_test.columns)
+            joblib.dump(scaler, SCALER_PATH)
+            self.logger.info(f"Scaler fitted on top features and saved to {SCALER_PATH}")
             self.logger.info(f"Top 10 features used for training: {self.top_features}")
             self.logger.info(f"Training set shape: {X_train.shape}, Test set shape: {X_test.shape}")
-            return X_train, X_test, y_train, y_test
+            return X_train_scaled, X_test_scaled, y_train, y_test
         except Exception as e:
             self.logger.error(f"Error while preparing model data: {e}")
             raise CustomException("Failed to prepare model data", str(e))
@@ -308,7 +310,5 @@ class DataPreprocessing:
             raise CustomException("Failed to execute data preprocessing pipeline", str(e))
 
 if __name__ == "__main__":
-    input_path = r"C:\ML Projects\DS-Intern-Assignment-Faheem-Khan\data\data.csv"
-    output_path = r"C:\MLOps Projects\End-to-End-MLOps-Smart-Factory-Energy-Prediction\artifacts\processed"
-    preprocessor = DataPreprocessing(input_path, output_path)
+    preprocessor = DataPreprocessing(RAW_FILE_PATH, PROCESSED_DIR)
     X_train, X_test, y_train, y_test = preprocessor.run()

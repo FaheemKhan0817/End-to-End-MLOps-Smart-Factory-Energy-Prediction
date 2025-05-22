@@ -1,10 +1,10 @@
 import os
 import pandas as pd
 import yaml
-from sklearn.model_selection import train_test_split
+import sys
 from src.logger import get_logger
 from src.custom_exception import CustomException
-from config.paths_config import RAW_DIR, RAW_FILE_PATH, TRAIN_FILE_PATH, TEST_FILE_PATH, CONFIG_PATH
+from config.paths_config import RAW_DIR, RAW_FILE_PATH, CONFIG_PATH
 
 # Set up the logger for this module
 logger = get_logger(__name__)
@@ -23,9 +23,9 @@ class DataIngestion:
             raise CustomException("Could not load configuration file", e)
 
     def download_data(self):
-        """Download the dataset from GitHub and save it as raw.csv."""
+        """Download the dataset from the specified source and save it as raw.csv."""
         try:
-            logger.info("Starting data download from GitHub")
+            logger.info("Starting data download from the specified source")
             
             # Create the raw directory if it doesn't exist
             os.makedirs(RAW_DIR, exist_ok=True)
@@ -38,40 +38,19 @@ class DataIngestion:
             return df
         
         except Exception as e:
-            logger.error("Error occurred while downloading data from GitHub")
+            logger.error("Error occurred while downloading data from the specified source")
             raise CustomException("Failed to download dataset", e)
 
-    def split_data(self, df):
-        """Split the dataset into train and test sets (80:20) and save them."""
-        try:
-            logger.info("Starting the train-test split process")
-            
-            # Split the data with 80:20 ratio
-            train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
-            
-            # Save the train and test datasets
-            train_df.to_csv(TRAIN_FILE_PATH, index=False)
-            test_df.to_csv(TEST_FILE_PATH, index=False)
-            
-            logger.info(f"Train data saved to: {TRAIN_FILE_PATH}")
-            logger.info(f"Test data saved to: {TEST_FILE_PATH}")
-            return train_df, test_df
-        
-        except Exception as e:
-            logger.error("Error occurred while splitting the dataset")
-            raise CustomException("Failed to split dataset into train and test sets", e)
-
     def ingest_data(self):
-        """Run the full data ingestion process: download and split."""
+        """Run the full data ingestion process: download the data."""
         try:
             logger.info("Starting the data ingestion process")
             
-            # Download and split the data
+            # Download the data
             df = self.download_data()
-            train_df, test_df = self.split_data(df)
             
             logger.info("Data ingestion completed successfully")
-            return train_df, test_df
+            return df
         
         except CustomException as ce:
             logger.error(f"CustomException occurred: {str(ce)}")
@@ -85,7 +64,7 @@ if __name__ == "__main__":
     try:
         logger.info("Initiating data ingestion script")
         data_ingestion = DataIngestion()
-        train_df, test_df = data_ingestion.ingest_data()
+        data_ingestion.ingest_data()
         logger.info("Data ingestion script completed")
     except CustomException as ce:
         logger.error(f"Script failed with CustomException: {str(ce)}")
