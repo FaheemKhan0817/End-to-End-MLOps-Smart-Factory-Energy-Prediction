@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlops-app
+spec:
+  replicas: 1  # Reduced to 1 for now to test
+  selector:
+    matchLabels:
+      app: mlops-app
+  template:
+    metadata:
+      labels:
+        app: mlops-app
+    spec:
+      containers:
+      - name: mlops-app
+        image: us-central1-docker.pkg.dev/mlops-project-460705/mlops-app/mlops-app:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        volumeMounts:
+        - name: artifacts
+          mountPath: "/app/artifacts"
+      volumes:
+      - name: artifacts
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlops-service
+spec:
+  selector:
+    app: mlops-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: LoadBalancer
