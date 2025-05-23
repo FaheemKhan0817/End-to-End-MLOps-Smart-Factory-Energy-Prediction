@@ -1,0 +1,29 @@
+version: 2.1
+
+
+executors:
+  docker-executor:
+    docker:
+      - image: google/cloud-sdk:latest
+    working_directory: ~/repo
+
+jobs:
+  checkout_code:
+    executor: docker-executor
+    steps:
+      - checkout
+
+  build_docker_image:
+    executor: docker-executor
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Authenticate with google cloud
+          command: |
+            echo "$GCLOUD_SERVICE_KEY" | base64 --decode > gcp-key.json
+            gcloud auth activate-service-account --key-file gcp-key.json
+            gcloud auth configure-docker
+
+          
+
