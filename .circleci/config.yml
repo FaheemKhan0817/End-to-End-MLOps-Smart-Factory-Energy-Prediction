@@ -51,7 +51,7 @@ jobs:
       - run:
           name: Deploy to GKE
           command: |
-            kubectl apply -f kubernates-deployement.yaml
+            kubectl apply -f kubernetes-deployment.yaml
 
 
 workflows:
